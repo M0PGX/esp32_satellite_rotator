@@ -6,6 +6,8 @@ Use Wi-Fi to connect Gpredict to the rotator. No driver required, simply enter t
 
 Automatically connects to Wi-Fi and then finds North on power up.
 
-The only wires required during operation are for power.
+The only wires required during operation are for power and the antenna.
 
 Will run on 12 - 30 volts.
+
+Supports OTA Updates
