@@ -1,18 +1,15 @@
 #include "A4988RotatorController.h"
 #include "A4988ElevationRotatorController.h"
-
 #include "WiFi.h"
 
 // OTA Update
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
 #include <ArduinoOTA.h>
-// END OTA Update
 
 // Autoconnect
 #include <WebServer.h>
 #include <AutoConnect.h>
-// END Autoconnect
 
 #include <SPI.h>
 #include <Wire.h>
@@ -50,21 +47,21 @@ WiFiServer wifiServer(4533);
 
 #define BufferSize 256
 
-# define X_EN  18 // DONE 3 //ENA+(+5V) stepper motor enable , active low     Orange
-# define X_DIR 14 // DONE 5 //DIR+(+5v) axis stepper motor direction control  Brown
-# define X_STP 13 // DONE 7 //PUL+(+5v) axis stepper motor step control       RED
+# define X_EN  18           // ENA+(+5V) stepper motor enable , active low
+# define X_DIR 14           // DIR+(+5v) axis stepper motor direction control
+# define X_STP 13           // PUL+(+5v) axis stepper motor step control
 // microstep
-# define X_MICRO_1 19 // DONE 
-# define X_MICRO_2 5  // DONE 
-# define X_MICRO_3 12 // DONE 
+# define X_MICRO_1 19
+# define X_MICRO_2 5
+# define X_MICRO_3 12
 
-# define EL_EN  32 // DONE 3 //ENA+(+5V) stepper motor enable , active low     Orange
-# define EL_DIR 25 // DONE 5 //DIR+(+5v) axis stepper motor direction control  Brown
-# define EL_STP 27 // DONE 7 //PUL+(+5v) axis stepper motor step control       RED
+# define EL_EN  32          //ENA+(+5V) stepper motor enable , active low
+# define EL_DIR 25          //DIR+(+5v) axis stepper motor direction control
+# define EL_STP 27          //PUL+(+5v) axis stepper motor step control
 // microstep
-# define EL_MICRO_1 4 // DONE 
-# define EL_MICRO_2 33 // DONE 
-# define EL_MICRO_3 26 // DONE 
+# define EL_MICRO_1 4 
+# define EL_MICRO_2 33 
+# define EL_MICRO_3 26 
 
 // Speed
 # define TRACKING 800
@@ -72,8 +69,8 @@ WiFiServer wifiServer(4533);
 # define FAST 200
 
 
-A4988RotatorController xRot; // Rotato rController
-A4988ElevationRotatorController elRot; // Rotato Controller (uses an ADXL345 for angle detection)
+A4988RotatorController xRot;            // Azimuth rotator Controller
+A4988ElevationRotatorController elRot;  // Elevation rotato Controller (uses an ADXL345 for angle detection)
 
 void displayAzimuth(int pos)
 {
@@ -115,31 +112,12 @@ void displayFooterMessage(char *ip_address)
   display.println(String(ip_address));
 }
 
-void serialEvent()    // Read data from serial port
-{
-  while (Serial.available()) 
-  {
-    char inChar = (char)Serial.read();            // get the new byte:
-    if (inChar > 0)     {inputString += inChar;}  // add it to the inputString:
-    if (inChar == '\n') { stringComplete = true;} // if the incoming character is a newline, set a flag so the main loop can do something about it: 
-  }
-}
-
-boolean isNumber(char *input)
-{
-  for (int i = 0; input[i] != '\0'; i++)
-  {
-    if (isalpha(input[i]))
-      return false;
-  }
-   return true;
-}
-
 void unwind()
 {
   xRot.unwind();
 }
 
+// All slide functions move the rotator but don't alter the position counter
 void slideUp(int distance)
 {
   Serial.println("Up: ");
@@ -187,12 +165,6 @@ int home()
   displayFooterMessage("A message!");
   display.display();
 
-  if(azPos > 180) {
-    displayTurnRight();
-  } else {
-    displayTurnLeft();
-  }
-
   Serial.println("Start: " + azPos);
   xRot.setNewPosition(0);
   xRot.move();
@@ -233,13 +205,12 @@ int getHeading()
 
   xRot.off();
   elRot.off();
-  delay(200);
+  delay(20);
   //float azimuth; //is supporting float too
-  qmc.read(&x, &y, &z,&azimuth);
+  qmc.read(&x, &y, &z, &azimuth);
   xRot.on();
   elRot.on();
 
-//  return qmc.azimuth(&y,&x);
   return azimuth;
 }
 
@@ -262,7 +233,7 @@ void setup() {// *************************************************************  
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {
     Serial.println("Connection Failed! Rebooting...");
-    delay(5000);
+    delay(2000);
     ESP.restart();
   }
 
@@ -337,7 +308,7 @@ void setup() {// *************************************************************  
   digitalWrite (EL_STP, LOW); //PUL
 
   xRot.setDefaults();
-  xRot.setPins(X_EN, X_DIR, X_STP, X_MICRO_1, X_MICRO_2, X_MICRO_3);        // setPins(int enable_pin, int direction_pin, int step_pin, int microstep_pin_1, int microstep_pin_2, int microstep_pin_3);
+  xRot.setPins(X_EN, X_DIR, X_STP, X_MICRO_1, X_MICRO_2, X_MICRO_3);              // setPins(int enable_pin, int direction_pin, int step_pin, int microstep_pin_1, int microstep_pin_2, int microstep_pin_3);
   xRot.setTrackingSpeed(TRACKING);
   xRot.setIntermediateSpeed(INTERMEDIATE);
   xRot.setFastSpeed(FAST);
@@ -363,26 +334,13 @@ void setup() {// *************************************************************  
   azPos = 0;
   elPos = 0;
 
-// REMOVED as we are now using Autoconnect
-  // Connect to Wi-Fi
-//  delay(1000);
-//  WiFi.begin(ssid, password);
-//
-//  while (WiFi.status() != WL_CONNECTED) {
-//    delay(1000);
-//    Serial.println("Connecting to WiFi..");
-//  }
-//
-//  // IP address needs to be a string to display on the oLED display
-// END REMOVED as we are now using Autoconnect
-
   delay(100);
-//  sprintf(ip_address, "%d.%d.%d.%d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3] );
   sprintf(ip_address, "%d.%d.%d.%d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3] );
-//  Serial.println("Connected to the WiFi network");
-//  Serial.print("My IP address is: ");
-//  Serial.println(ip_address);
-//  Serial.println("Set up Gpredict to connect to this IP address using port 4533.");
+  sprintf(ip_address, "%d.%d.%d.%d", WiFi.localIP()[0], WiFi.localIP()[1], WiFi.localIP()[2], WiFi.localIP()[3] );
+  Serial.println("Connected to the WiFi network");
+  Serial.print("My IP address is: ");
+  Serial.println(ip_address);
+  Serial.println("Set up Gpredict to connect to this IP address using port 4533.");
 
   wifiServer.begin();
 
@@ -410,8 +368,6 @@ void setup() {// *************************************************************  
   display.display();
   delay(5000);
   while(home() > 0){}
-  // elRot.off();                // Take a rest
-  xRot.off();
   displayFoundNorth();
 
   elRot.moveTo(0);
@@ -424,9 +380,9 @@ void setup() {// *************************************************************  
 
 void loop()
 {
-    double angleAz;
-    double angleEl;
-    String data;
+  double angleAz;
+  double angleEl;
+  String data;
 
   ArduinoOTA.handle();      // Check for an OTA update
   Portal.handleClient();    // Handle the Autoconnect portal
